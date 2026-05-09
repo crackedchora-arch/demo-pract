@@ -8,10 +8,23 @@ export const createUser = async (req, res) => {
   res.json(user);
 };
 
-export const getAll = async (_, res) => {
-  const users = await User.find();
+export const getAll = async (req, res) => {
+  const page = Number(req.query.page) || 1
+  const limit = Number(req.query.limit) || 10
 
-  res.json(users);
+  const skip = (page - 1) * limit;
+  const users = await User.find()
+  .skip(skip)
+  .limit(limit)
+  
+  const total = await User.countDocuments();
+
+  res.json({
+    users,
+    hasMore: page * limit < total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+  });
 };
 
 export const toggleActive = async (req, res) => {

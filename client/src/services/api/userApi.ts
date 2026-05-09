@@ -1,11 +1,17 @@
-import { current } from "@reduxjs/toolkit";
+
 import type { User } from "../../types/user.types";
 import { baseApi } from "./baseApi";
 
+interface GetUsersData{
+  users: User[],
+  hasMore: boolean,
+  totalPages: number,
+  currentPage: number,
+}
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // GET USERS
-    getUsers: builder.query<User[], void>({
+    getUsers: builder.query<GetUsersData, void>({
       query: () => "/users/get-all",
       providesTags: ["User"]
     }),
@@ -32,7 +38,7 @@ export const userApi = baseApi.injectEndpoints({
           userApi.util.updateQueryData(
             "getUsers",
             undefined,
-            (draft: User[]) => {
+            (draft: GetUsersData) => {
            
               const user = draft.find((user) => user._id === id);
         
