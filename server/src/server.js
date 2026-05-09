@@ -23,5 +23,5 @@ mongoose
   
 app.use("/api/users", userRoutes);
 app.listen(port, () => {
-  console.log(`Sandbox listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });

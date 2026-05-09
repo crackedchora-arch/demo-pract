@@ -5,12 +5,17 @@ import {
   useToggleUserMutation,
 } from "./services/api/userApi";
 import type { User } from "./types/user.types";
+import UserCard from "./components/UserCard";
 
 function App() {
   const { data: users = [] } = useGetUsersQuery(undefined);
   const [createUser, { isLoading }] = useCreateUserMutation();
   const [toggleUser] = useToggleUserMutation();
   const [name, setName] = useState("");
+
+  const toggleActive = async (id: string) => {
+    await toggleUser(id).unwrap();
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +46,13 @@ function App() {
         </button>
       </form>
       <hr />
-      <div>
+      <div className="flex flex-col gap-3 mt-3  w-full bg-primary items-center mb-3">
         {users.map((u: User) => (
-          <div key={u._id}>
-            {u.name} - {u.active ? "Active" : "Inactive"}
-            <button onClick={() => toggleUser(u._id)}>Toggle</button>
-          </div>
+          <UserCard 
+          name={u.name}
+          active={u.active}
+          onToggle={() => toggleActive(u._id!)}
+          />
         ))}
       </div>
     </div>
