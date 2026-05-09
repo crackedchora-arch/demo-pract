@@ -1,35 +1,51 @@
+import type { User } from "../../types/user.types";
 import { baseApi } from "./baseApi";
 
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getUsers: builder.query({
+    // GET USERS
+    getUsers: builder.query<User[], void>({
       query: () => "/users/get-all",
-     
     }),
 
-    createUser: builder.mutation({
-      query: (name: string) => ({
+    // CREATE USER
+    createUser: builder.mutation<User, { name: string }>({
+      query: (name) => ({
         url: "/users/create",
         method: "POST",
         body: { name },
       }),
-      
     }),
 
-    toggleUser: builder.mutation({
-      query: (id: string) => ({
+    // TOGGLE USER
+    toggleUser: builder.mutation<User, string>({
+      query: (id) => ({
         url: `/users/${id}`,
         method: "PATCH",
       }),
-      
+
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          baseApi.util.updateQueryData(
+            "getUsers",
+            undefined,
+            (draft: User[]) => {
+              const user = draft.find((u) => u.id === id);
+              if (user) {
+                user.active = !user.active;
+              }
+            },
+          ),
+        );
+
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          patchResult.undo();
+        }
+      },
     }),
   }),
 
   overrideExisting: false,
 });
-
-export const {
-  useGetUsersQuery,
-  useCreateUserMutation,
-  useToggleUserMutation,
-} = userApi;
