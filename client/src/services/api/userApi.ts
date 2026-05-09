@@ -1,3 +1,4 @@
+import { current } from "@reduxjs/toolkit";
 import type { User } from "../../types/user.types";
 import { baseApi } from "./baseApi";
 
@@ -6,15 +7,17 @@ export const userApi = baseApi.injectEndpoints({
     // GET USERS
     getUsers: builder.query<User[], void>({
       query: () => "/users/get-all",
+      providesTags: ["User"]
     }),
 
     // CREATE USER
-    createUser: builder.mutation<User, { name: string }>({
+    createUser: builder.mutation<User, string>({
       query: (name) => ({
         url: "/users/create",
         method: "POST",
         body: { name },
       }),
+      invalidatesTags: ["User"]
     }),
 
     // TOGGLE USER
@@ -26,13 +29,16 @@ export const userApi = baseApi.injectEndpoints({
 
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          baseApi.util.updateQueryData(
+          userApi.util.updateQueryData(
             "getUsers",
             undefined,
             (draft: User[]) => {
-              const user = draft.find((u) => u.id === id);
-              if (user) {
-                user.active = !user.active;
+           
+              const user = draft.find((user) => user._id === id);
+        
+              if(user){
+                console.log("user present");
+                user.active = !user.active
               }
             },
           ),
@@ -47,5 +53,7 @@ export const userApi = baseApi.injectEndpoints({
     }),
   }),
 
-  overrideExisting: false,
+ 
 });
+
+export const {useCreateUserMutation, useGetUsersQuery, useToggleUserMutation} =userApi;
