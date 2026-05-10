@@ -13,7 +13,7 @@ import  UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
 function App() {
   const limit = 10;
   const [page, setPage] = useState(1);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  
   const { data: usersData, isFetching, isLoading: isUsersLoading} = useGetUsersQuery({
     page,
     limit,
@@ -25,7 +25,7 @@ function App() {
   const [name, setName] = useState("");
   console.log("userdata", usersData);
   const toggleActive = async (id: string) => {
-    await toggleUser({id, page, limit}).unwrap();
+    await toggleUser(id).unwrap();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,18 +38,7 @@ function App() {
     setName("");
   };
 
-  // merging new data with old data
-  useEffect(() => {
-    if (usersData?.users) {
-      // remove duplicates
-      setAllUsers((prev) => {
-        const newUsers = usersData.users.filter((newUser: User) => !prev.some((oldUser) => oldUser._id === newUser._id ))
-      
-       return [...prev, ...newUsers];
-      });
-
-    }
-  }, [usersData]);
+  
 
   // intersection observer
   useEffect(() => {
@@ -99,10 +88,10 @@ function App() {
       </form>
       <hr />
       <div className="flex flex-col gap-3 mt-3  w-full  items-center">
-        {isLoading ? (
+        {isUsersLoading ? (
           <UserCardSkeleton />
         ) : (
-          allUsers.map((u: User) => (
+          usersData?.users.map((u: User) => (
             <UserCard
               key={u._id}
               name={u.name}

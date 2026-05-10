@@ -13,7 +13,7 @@ export const getAll = async (req, res) => {
   const limit = Number(req.query.limit) || 10;
 
   const skip = (page - 1) * limit;
-  const users = await User.find().skip(skip).limit(limit);
+  const users = await User.find().skip(skip).limit(limit).sort({createdAt: -1});
 
   const total = await User.countDocuments();
 
