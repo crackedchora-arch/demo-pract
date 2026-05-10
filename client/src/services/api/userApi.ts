@@ -8,11 +8,13 @@ interface GetUsersData{
   totalPages: number,
   currentPage: number,
 }
+
+
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // GET USERS
-    getUsers: builder.query<GetUsersData, void>({
-      query: () => "/users/get-all",
+    getUsers: builder.query<GetUsersData, {limit: number, page: number}>({
+      query: ({page, limit}) => `/users/get-all?page=${page}&limit=${limit}`,
       providesTags: ["User"]
     }),
 
@@ -27,23 +29,23 @@ export const userApi = baseApi.injectEndpoints({
     }),
 
     // TOGGLE USER
-    toggleUser: builder.mutation<User, string>({
-      query: (id) => ({
+    toggleUser: builder.mutation<User, {id: string, page: number, limit:number}>({
+      query: ({id}) => ({
         url: `/users/${id}`,
         method: "PATCH",
       }),
 
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+      async onQueryStarted({id, page, limit}, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           userApi.util.updateQueryData(
             "getUsers",
-            undefined,
+            {page, limit},
             (draft: GetUsersData) => {
            
-              const user = draft.find((user) => user._id === id);
+              const user = draft.users.find((user) => user._id === id);
         
               if(user){
-                console.log("user present");
+           
                 user.active = !user.active
               }
             },

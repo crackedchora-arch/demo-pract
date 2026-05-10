@@ -14,7 +14,7 @@ export default function UserCard({
   onToggle,
 }: UserCardProps) {
   return (
-    <Card className="w-full max-w-sm rounded-2xl shadow-md">
+    <Card className="w-full bg-card max-w-sm rounded-2xl shadow-md">
       <CardContent className="flex items-center justify-between p-5">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold">{name}</h2>
