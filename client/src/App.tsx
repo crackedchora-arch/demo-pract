@@ -8,6 +8,7 @@ import type { User } from "./types/user.types";
 import UserCard from "./components/UserCard";
 import { Button } from "./components/ui/button";
 import  UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
+import UploadComponent from "./components/UploadComponent";
 
 
 function App() {
@@ -70,22 +71,26 @@ function App() {
   if(isUsersLoading) return <>Loading...</>
   return (
     <div className="p-5 bg-accent">
-      <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
-        <input
-          type="text"
-          placeholder="Enter user name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          style={{
-            padding: "8px",
-            marginRight: "10px",
-          }}
-        />
+      <div className="flex mb-5 justify-between items-center">
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Enter user name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={{
+              padding: "8px",
+              marginRight: "10px",
+            }}
+          />
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : "Create User"}
-        </Button>
-      </form>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Creating..." : "Create User"}
+          </Button>
+        </form>
+        <UploadComponent />
+      </div>
+
       <hr />
       <div className="flex flex-col gap-3 mt-3  w-full  items-center">
         {isUsersLoading ? (
