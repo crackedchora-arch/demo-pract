@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import crypto from "crypto";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ const UploadImageFromServer = () => {
              if (!file) return;
 
             
-             const uploadId = crypto.randomUUID();
+             const uploadId = window.crypto.randomUUID();
 
              
              setProgress(0);
@@ -47,10 +47,10 @@ const UploadImageFromServer = () => {
               
          try {
            // upload file through rtk query
-           await uploadImage({
-             file,
-             uploadId,
-           }).unwrap();
+           const formData = new FormData();
+           formData.append("file", file);
+           formData.append("uploadId", uploadId)
+           await uploadImage(formData).unwrap();
          } catch (error: any) {
              console.error("Upload failed:", error.data.message);
 
@@ -63,7 +63,7 @@ const UploadImageFromServer = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Upload Image</Button>
+        <Button>Upload Image: Server</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">

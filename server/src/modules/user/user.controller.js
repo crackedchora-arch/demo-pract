@@ -1,4 +1,4 @@
-import redis from "../../../config/redis.js";
+import redis from "../../config/redis.js";
 import User from "./user.model.js";
 
 const root = "demo_pract";

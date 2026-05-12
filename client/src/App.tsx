@@ -9,6 +9,7 @@ import UserCard from "./components/UserCard";
 import { Button } from "./components/ui/button";
 import UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
 import UploadComponent from "./components/dialogs/UploadComponent";
+import UploadImageFromServer from "./components/dialogs/UploadImageFromServer";
 
 function App() {
   const limit = 10;
@@ -86,7 +87,10 @@ function App() {
             {isLoading ? "Creating..." : "Create User"}
           </Button>
         </form>
-        <UploadComponent />
+        <div className="flex gap-3">
+          <UploadComponent />
+          <UploadImageFromServer />
+        </div>
       </div>
 
       <hr />
