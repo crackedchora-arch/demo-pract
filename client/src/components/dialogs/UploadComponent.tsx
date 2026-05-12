@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUploadImageMutation } from "../services/api/uploadApi";
+import { useUploadImageMutation } from "../../services/api/uploadApi";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,9 @@ import {
 export default function UploadComponent() {
   const [progress, setProgress] = useState(0);
   const [open, setOpen] = useState(false);
-  const [uploadImage, { isLoading, data, error, reset }] = useUploadImageMutation();
-    console.log("image data", data)
+  const [uploadImage, { isLoading, data, error, reset }] =
+    useUploadImageMutation();
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

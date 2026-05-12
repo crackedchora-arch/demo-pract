@@ -15,7 +15,10 @@ export const uploadApi =createApi({
                 try {
                     const formData = new FormData();
                     formData.append("file", file);
-                    formData.append("upload_preset", "my_upload_preset");
+                    formData.append(
+                      "upload_preset",
+                      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
+                    );
 
                     // upload to cloudinary
                     const response = await axios.post(

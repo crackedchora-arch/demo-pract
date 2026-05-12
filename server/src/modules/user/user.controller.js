@@ -130,7 +130,7 @@ export const toggleActive = async (req, res) => {
     });
   } finally {
     // release lock
-    // await redis.del(`${root}:lock:user:${req.params.id}`);
+    await redis.del(`${root}:lock:user:${req.params.id}`);
   }
   
 };

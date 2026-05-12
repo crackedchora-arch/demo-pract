@@ -7,15 +7,18 @@ import {
 import type { User } from "./types/user.types";
 import UserCard from "./components/UserCard";
 import { Button } from "./components/ui/button";
-import  UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
-import UploadComponent from "./components/UploadComponent";
-
+import UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
+import UploadComponent from "./components/dialogs/UploadComponent";
 
 function App() {
   const limit = 10;
   const [page, setPage] = useState(1);
-  
-  const { data: usersData, isFetching, isLoading: isUsersLoading} = useGetUsersQuery({
+
+  const {
+    data: usersData,
+    isFetching,
+    isLoading: isUsersLoading,
+  } = useGetUsersQuery({
     page,
     limit,
   });
@@ -38,8 +41,6 @@ function App() {
 
     setName("");
   };
-
-  
 
   // intersection observer
   useEffect(() => {
@@ -66,11 +67,11 @@ function App() {
         observer.unobserve(currrentRef);
       }
     };
-  }, [isFetching, usersData]);
+  }, [isFetching, usersData?.hasMore]);
 
-  if(isUsersLoading) return <>Loading...</>
+  if (isUsersLoading) return <>Loading...</>;
   return (
-    <div className="p-5 bg-accent">
+    <div className="p-5 min-h-screen">
       <div className="flex mb-5 justify-between items-center">
         <form onSubmit={handleSubmit}>
           <input
@@ -78,10 +79,7 @@ function App() {
             placeholder="Enter user name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={{
-              padding: "8px",
-              marginRight: "10px",
-            }}
+            className="bg-muted rounded-full py-2 px-6 mr-3 "
           />
 
           <Button type="submit" disabled={isLoading}>
@@ -110,11 +108,11 @@ function App() {
         )}
 
         {!usersData?.hasMore && (
-          <p className="text-muted-foreground text-sm">No more users</p>
+          <p className="text-muted-foreground mt-2 text-sm">No more users</p>
         )}
       </div>
       <div
-        className="text-muted-foreground flex justify-center items-center bg-green-900 h"
+        className="text-muted-foreground flex justify-center items-center h-5"
         ref={observerRef}
       ></div>
     </div>
