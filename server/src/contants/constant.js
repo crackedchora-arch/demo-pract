@@ -1,6 +1,7 @@
 const CLOUDINARY_ROOT="demo_pract"
 
-export const CLOUDINARY_FOLDERS = { 
-    IMAGES: `${CLOUDINARY_ROOT}/images`
-}
+export const CLOUDINARY_FOLDERS = {
+  IMAGES: `${CLOUDINARY_ROOT}/images`,
+  VIDEOS: `${CLOUDINARY_ROOT}/videos`,
+};
 
