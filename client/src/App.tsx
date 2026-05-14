@@ -10,6 +10,8 @@ import { Button } from "./components/ui/button";
 import UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
 import UploadComponent from "./components/dialogs/UploadComponent";
 import UploadImageFromServer from "./components/dialogs/UploadImageFromServer";
+import VideoCropper from "./components/VideoCropper";
+import MediaCropDialogTS from "./components/dialogs/MediaCrop";
 
 function App() {
   const limit = 10;
@@ -94,6 +96,7 @@ function App() {
       </div>
 
       <hr />
+      <MediaCropDialogTS />
       <div className="flex flex-col gap-3 mt-3  w-full  items-center">
         {isUsersLoading ? (
           <UserCardSkeleton />

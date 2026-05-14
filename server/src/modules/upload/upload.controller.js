@@ -81,3 +81,33 @@ export const uploadImage = async (req, res) => {
     });
   }
 };
+
+export const uploadCroppedImageVideo =  async (req, res) => {
+  try {
+    const crop = JSON.parse(req.body.crop);
+
+  const inputPath = req.file.path;
+  const outputPath = `server/uploads/cropped-${Date.now()}.mp4`;
+
+  const { x, y, width, height } = crop;
+
+  ffmpeg(inputPath)
+    .videoFilters(`crop=${width}:${height}:${x}:${y}`)
+    .output(outputPath)
+    .on("end", () => {
+      res.json({
+        message: "Video cropped",
+        file: outputPath,
+      });
+    })
+    .on("error", (err) => {
+      console.error(err);
+      res.status(500).send("Error processing video");
+    })
+    .run();
+
+  } catch (error) {
+    console.log("error in uploadCroppedImageVideo", error.message);
+    return res.status(500).json({message: "Server Error"});
+  }
+}
