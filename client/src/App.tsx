@@ -10,7 +10,7 @@ import { Button } from "./components/ui/button";
 import UserCardSkeleton from "./components/skeletons/UserCardSkeleton";
 import UploadComponent from "./components/dialogs/UploadComponent";
 import UploadImageFromServer from "./components/dialogs/UploadImageFromServer";
-import VideoCropper from "./components/VideoCropper";
+
 import MediaCropDialogTS from "./components/dialogs/MediaCrop";
 
 function App() {
@@ -57,7 +57,7 @@ function App() {
       },
       {
         threshold: 1, // trigger when 100% visible
-      },
+      }
     );
 
     const currrentRef = observerRef.current;
@@ -101,7 +101,7 @@ function App() {
       <div className="flex flex-col gap-3 mt-3  w-full  items-center">
         {isUsersLoading ? (
           <UserCardSkeleton />
-        ) : ((usersData?.users ?? []).length > 0) ? (
+        ) : (usersData?.users ?? []).length > 0 ? (
           usersData?.users.map((u: User) => (
             <UserCard
               key={u._id}

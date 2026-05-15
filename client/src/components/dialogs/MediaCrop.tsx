@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 
 import {
@@ -34,25 +34,26 @@ const aspectRatios = [
 ];
 
 const MediaCrop = () => {
-   const [file, setFile] = useState(null);
-   const [mediaType, setMediaType] = useState("");
-   const [mediaSrc, setMediaSrc] = useState("");
+  const [file, setFile] = useState(null);
+  const [mediaType, setMediaType] = useState("");
+  const [mediaSrc, setMediaSrc] = useState("");
 
-   const [crop, setCrop] = useState({ x: 0, y: 0 });
-   const [zoom, setZoom] = useState(1);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
 
-   const [aspect, setAspect] = useState(1);
+  const [aspect, setAspect] = useState(1);
 
-   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-   const [previewImage, setPreviewImage] = useState("");
+  const [previewImage, setPreviewImage] = useState("");
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const videoRef = useRef(null);
+  const [uploadCroppedImageVideo, { isLoading: isUploading }] =
+    useUploadCroppedImageVideoMutation();
 
-   const videoRef = useRef(null);
-   const [uploadCroppedImageVideo, {isLoading: isUploading}] = useUploadCroppedImageVideoMutation()
-  
   const handleFileChange = (e: any) => {
     const file = e.target?.files?.[0];
-    if(!file) return
+    if (!file) return;
 
     setFile(file);
 
@@ -60,25 +61,23 @@ const MediaCrop = () => {
     setMediaType(type);
 
     const objectUrl = URL.createObjectURL(file);
-    setMediaSrc(objectUrl)
+    setMediaSrc(objectUrl);
 
-    setPreviewImage("")
-  }
-  
-  
-  
-   const onCropComplete = useCallback((_, croppedAreaPixels: any) => {
+    setPreviewImage("");
+  };
+
+  const onCropComplete = useCallback((_, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
-   }, [])
+  }, []);
 
-  const createImagePreview = async() => {
-    if(!croppedAreaPixels || mediaType !== "image") return;
+  const createImagePreview = async () => {
+    if (!croppedAreaPixels || mediaType !== "image") return;
 
     const image = new Image();
     image.src = mediaSrc;
 
     await new Promise((resolve) => {
-      image.onload = resolve
+      image.onload = resolve;
     });
 
     // canvas creation
@@ -110,29 +109,68 @@ const MediaCrop = () => {
       0,
       croppedAreaPixels.width,
       croppedAreaPixels.height
-    )
+    );
 
     const base64 = canvas.toDataURL("image/jpeg");
     setPreviewImage(base64);
   };
 
-  const handleUpload = async() => {
+  const generateVideoPreview = async () => {
+    if (!videoRef.current || !previewCanvasRef.current || !croppedAreaPixels)
+      return;
+
+    const video = videoRef.current;
+    const canvas = previewCanvasRef.current;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    canvas.width = croppedAreaPixels.width;
+    canvas.height = croppedAreaPixels.height;
+
+    await video.play();
+
+    const render = () => {
+      if (video.paused || video.ended) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(
+        video,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      requestAnimationFrame(render);
+    };
+
+    render();
+  };
+
+  const handleUpload = async () => {
     try {
-      if(!croppedAreaPixels || !file) return alert("please crop media first")
-    
-        const formData = new FormData();
+      if (!croppedAreaPixels || !file) return alert("please crop media first");
+
+      const formData = new FormData();
       formData.append("file", file);
-      console.log("croppedareapixels", croppedAreaPixels)
+      console.log("croppedareapixels", croppedAreaPixels);
       formData.append("cropData", JSON.stringify(croppedAreaPixels));
       formData.append("aspectRatio", aspect);
 
       await uploadCroppedImageVideo(formData);
-      alert("Upload Sucess")
-      } catch (error: any) {
-      console.log("Error in handleUpload", error.message)
-      alert("Upload failed")
+      alert("Upload Sucess");
+    } catch (error: any) {
+      console.log("Error in handleUpload", error.message);
+      alert("Upload failed");
     }
-  }
+  };
 
   return (
     <Dialog>
@@ -192,6 +230,9 @@ const MediaCrop = () => {
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
+                onMediaLoaded={(mediaSize) => {
+                  console.log(mediaSize);
+                }}
               />
             </div>
           )}
@@ -233,32 +274,30 @@ const MediaCrop = () => {
           )}
 
           {/* Video Preview */}
+          {/* Hidden Source Video */}
 
-          {mediaType === "video" && mediaSrc && croppedAreaPixels && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Video Preview Frame</h3>
-
-              <div className="relative inline-block rounded-2xl overflow-hidden border">
-                <video
-                  ref={videoRef}
-                  src={mediaSrc}
-                  controls
-                  className="w-[400px]"
-                />
-
-                <div
-                  className="absolute border-2 border-red-500 pointer-events-none"
-                  style={{
-                    left: `${croppedAreaPixels.x}px`,
-                    top: `${croppedAreaPixels.y}px`,
-                    width: `${croppedAreaPixels.width}px`,
-                    height: `${croppedAreaPixels.height}px`,
-                  }}
-                />
-              </div>
-            </div>
+          {mediaType === "video" && mediaSrc && (
+            <video
+              ref={videoRef}
+              src={mediaSrc}
+              muted
+              playsInline
+              className="hidden"
+            />
           )}
 
+          {/* Cropped Preview */}
+
+          {mediaType === "video" && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Cropped Video Preview</h3>
+
+              <canvas
+                ref={previewCanvasRef}
+                className="w-[400px] rounded-xl border bg-black"
+              />
+            </div>
+          )}
           {/* Actions */}
 
           <div className="flex flex-wrap gap-3 pt-2">
@@ -271,10 +310,18 @@ const MediaCrop = () => {
                 Generate Preview
               </Button>
             )}
-
+            {mediaType === "video" && (
+              <Button
+                variant="secondary"
+                onClick={generateVideoPreview}
+                className="rounded-xl"
+              >
+                Generate Video Preview
+              </Button>
+            )}
             {mediaSrc && croppedAreaPixels && (
-              <Button onClick={handleUpload}  className="rounded-xl">
-              {isUploading? "Uploading": "Upload Cropped Media"}
+              <Button onClick={handleUpload} className="rounded-xl">
+                {isUploading ? "Uploading" : "Upload Cropped Media"}
               </Button>
             )}
           </div>
@@ -282,6 +329,6 @@ const MediaCrop = () => {
       </DialogContent>
     </Dialog>
   );
-}
+};
 
 export default MediaCrop;
