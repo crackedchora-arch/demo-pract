@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs"
 import { clients } from "../../utils/sseClients.js";
 import cloudinary from "../../config/cloudinary.js";
 import { CLOUDINARY_FOLDERS } from "../../contants/constant.js";
@@ -87,16 +87,30 @@ export const uploadImage = async (req, res) => {
 // cropData = {x,y, height, width}
 export const uploadCroppedImageVideo =  async (req, res) => {
   try {
-    const {aspectRatio, cropData} = req.body;
+    const {aspectRatio} = req.body;
+    const cropData = JSON.parse(req.body.cropData)
     const file  = req.file;
+    console.log("File info:", file);
+    console.log("File path exists?", fs.existsSync(file.path));
+    console.log("File size:", fs.statSync(file.path).size);
     if(!file ) return res.status(400).json({message: "file is required"});
     const mimetype =file.mimetype;
 
     // image handling
     if (mimetype.startsWith("image")) {
+     
       const cloudResponse = await cloudinary.uploader.upload(file.path, {
         folder: CLOUDINARY_FOLDERS.IMAGES,
         resource_type: "image",
+        transformation: [
+          {
+            x: cropData.x,
+            y: cropData.y,
+            width: cropData.width,
+            height: cropData.height,
+            crop: "crop"
+          }
+        ]
       });
 
       // cleanup temp file
@@ -105,10 +119,10 @@ export const uploadCroppedImageVideo =  async (req, res) => {
       return res.json({
         type: "image",
         url: cloudResponse.secure_url,
-        publicId: cloudResponse.publicId,
-        width: cloudResponse.width,
-        height: cloudResponse.height,
-        aspectRatio: cloudResponse.width / cloudResponse.height,
+        publicId: cloudResponse.public_id,
+        width: cropData.width,
+        height: cropData.height,
+        aspectRatio: cropData.width / cropData.height,
       });
     }
 
@@ -119,11 +133,12 @@ export const uploadCroppedImageVideo =  async (req, res) => {
       const outputPath = path.join(
         path.dirname(file.path), outputFilename
       );
+      
       await cropVideo(file.path, outputPath, cropData);
-
+console.log("hi");
       // final video dimensions
       const dimensions = await getVideoDimension(outputPath);
-      const aspectRatio = dimensions.width / dimensions.height;
+      const finalAspectRatio = dimensions.width / dimensions.height;
       
       const cloudResponse = await cloudinary.uploader.upload(outputPath, {
        folder: CLOUDINARY_FOLDERS.VIDEOS,
@@ -138,14 +153,14 @@ export const uploadCroppedImageVideo =  async (req, res) => {
       return res.json({
         type: "video",
         url: cloudResponse.secure_url,
-        publicId: cloudResponse.publicId,
+        publicId: cloudResponse.public_id,
         width: dimensions.width,
         height: dimensions.height,
-        aspectRatio,
+        aspectRatio: finalAspectRatio,
       });
       
     }
-    throw new Error
+    throw new Error("unsupported file type")
   } catch (error) {
      console.log("Error in uploadCroppedImageVideo", error.message);
      return res.status(500).json({message: "Server Error"})

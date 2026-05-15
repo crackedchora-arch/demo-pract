@@ -1,14 +1,28 @@
 import { spawn, execFile } from "child_process";
-
 import ffprobe from "ffprobe-static";
-
+import fs from "fs"
 export const cropVideo = (inputPath, outputPath, crop) => {
   try {
     return new Promise((resolve, reject) => {
+       console.log("INPUT PATH:", inputPath);
+
+          if (!fs.existsSync(inputPath)) {
+            return reject(new Error("Input file does not exist"));
+          }
+
+           const stats = fs.statSync(inputPath);
+
+           console.log("FILE SIZE:", stats.size);
+
+           if (stats.size === 0) {
+             return reject(new Error("Uploaded file is empty"));
+           }
+
+
       // initial ffmpeg command: ffmpeg -i input.mp4
-      const args = ["-i", inputPath];
+     const args = ["-i", inputPath, "-f", "null", "-"];
       if (crop) {
-        const { x, y, width, height } = crop;
+        let { x, y, width, height } = crop;
 
         // sanitize values to int type
         x = Math.floor(x);
@@ -33,9 +47,9 @@ export const cropVideo = (inputPath, outputPath, crop) => {
         "-c:v",
         "libx264", // video codec
         "-preset",
-        "fast", // faster: less CPU bigger file, slower: better compression, Choices: ultrafast, fast, medium, slow
+        "ultrafast", // faster: less CPU bigger file, slower: better compression, Choices: ultrafast, fast, medium, slow
         "-crf",
-        "23", // quality level, higher: quality worse, lower: better quality
+        "28", // quality level, higher: quality worse, lower: better quality
         "-c:a",
         "aac", // audio codec
         "-movflags",
@@ -43,7 +57,7 @@ export const cropVideo = (inputPath, outputPath, crop) => {
         "-y",
         outputPath, // -y: overwrite output if file exists
       );
-
+        console.log("FFMPEG CMD:");
       console.log("ffmpeg args:", args.join(" "));
       if (!inputPath) {
         return reject(new Error("Input path is missing"));
@@ -53,16 +67,20 @@ export const cropVideo = (inputPath, outputPath, crop) => {
       const ff = spawn("ffmpeg", args);
 
       // read ffmpeg logs
-      ff.stderr("data", (data) => {
+      ff.stderr.on("data", (data) => {
         console.log(data.toString());
       });
-
+        ff.on("error", (err) => {
+          reject(err);
+        });
       ff.on("close", (code) => {
         if (code === 0) return resolve(true);
         else reject(new Error(`FFmpeg failed with code ${code}`));
       });
     });
-  } catch (error) {}
+  } catch (error) {
+    console.log("error in cropVideo", error.message)
+  }
 };
 
 export const getVideoDimension = (filePath) => {
@@ -73,7 +91,7 @@ export const getVideoDimension = (filePath) => {
       "-select_streams",
       "v:0", // a file may contain audio, video, subtitles. Select only video stream
       "-show_entries",
-      "streams=width,height", // to only only height and width instead of large metadata
+      "stream=width,height", // to only only height and width instead of large metadata
       "-of",
       "json", // output format
       filePath,

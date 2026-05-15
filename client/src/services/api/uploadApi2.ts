@@ -10,8 +10,16 @@ export const uploadApi2 = baseApi.injectEndpoints({
                 method: "POST",
                 body: formData
             })
+        }),
+        uploadCroppedImageVideo: builder.mutation<any, FormData>({
+            query:(formData) => ({
+                url: "/upload/cropped-image-video",
+                method: "POST",
+                body: formData
+            })
         })
+
     })
 })
 
-export const {useUploadFromServerMutation} = uploadApi2;
+export const {useUploadFromServerMutation, useUploadCroppedImageVideoMutation} = uploadApi2;

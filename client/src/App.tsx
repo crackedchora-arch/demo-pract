@@ -97,11 +97,11 @@ function App() {
       </div>
 
       <hr />
-     
+
       <div className="flex flex-col gap-3 mt-3  w-full  items-center">
         {isUsersLoading ? (
           <UserCardSkeleton />
-        ) : (
+        ) : ((usersData?.users ?? []).length > 0) ? (
           usersData?.users.map((u: User) => (
             <UserCard
               key={u._id}
@@ -110,6 +110,8 @@ function App() {
               onToggle={() => toggleActive(u._id!)}
             />
           ))
+        ) : (
+          ""
         )}
         {isFetching && !isUsersLoading && usersData?.hasMore && (
           <UserCardSkeleton />

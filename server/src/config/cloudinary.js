@@ -1,5 +1,7 @@
-import cloudinary from "cloudinary";
+import {v2 as cloudinary} from "cloudinary";
+import dotenv from 'dotenv'
 
+dotenv.config()
 
 console.log("dontenv", process.env.CLOUDINARY_CLOUD_NAME);
 cloudinary.config({

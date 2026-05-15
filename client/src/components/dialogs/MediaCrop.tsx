@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 
 import {
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUploadCroppedImageVideoMutation } from "@/services/api/uploadApi2";
 const aspectRatios = [
   {
     label: "square",
@@ -47,7 +48,7 @@ const MediaCrop = () => {
    const [previewImage, setPreviewImage] = useState("");
 
    const videoRef = useRef(null);
-
+   const [uploadCroppedImageVideo, {isLoading: isUploading}] = useUploadCroppedImageVideoMutation()
   
   const handleFileChange = (e: any) => {
     const file = e.target?.files?.[0];
@@ -56,17 +57,82 @@ const MediaCrop = () => {
     setFile(file);
 
     const type = file.type.startsWith("video") ? "video" : "image";
+    setMediaType(type);
+
+    const objectUrl = URL.createObjectURL(file);
+    setMediaSrc(objectUrl)
+
+    setPreviewImage("")
   }
   
-  const createImagePreview = () => {
-
-  }
   
-  const onCropComplete = () => {
+  
+   const onCropComplete = useCallback((_, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+   }, [])
 
+  const createImagePreview = async() => {
+    if(!croppedAreaPixels || mediaType !== "image") return;
+
+    const image = new Image();
+    image.src = mediaSrc;
+
+    await new Promise((resolve) => {
+      image.onload = resolve
+    });
+
+    // canvas creation
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = croppedAreaPixels.width;
+    canvas.height = croppedAreaPixels.height;
+
+    // ctx.drawImage(
+    //   sourceImage,
+    //   sourceX,
+    //   sourceY,
+    //   sourceWidth,
+    //   sourceHeight,
+    //   destX,
+    //   destY,
+    //   destWidth,
+    //   destHeight,
+    // );
+
+    ctx?.drawImage(
+      image,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height
+    )
+
+    const base64 = canvas.toDataURL("image/jpeg");
+    setPreviewImage(base64);
+  };
+
+  const handleUpload = async() => {
+    try {
+      if(!croppedAreaPixels || !file) return alert("please crop media first")
+    
+        const formData = new FormData();
+      formData.append("file", file);
+      console.log("croppedareapixels", croppedAreaPixels)
+      formData.append("cropData", JSON.stringify(croppedAreaPixels));
+      formData.append("aspectRatio", aspect);
+
+      await uploadCroppedImageVideo(formData);
+      alert("Upload Sucess")
+      } catch (error: any) {
+      console.log("Error in handleUpload", error.message)
+      alert("Upload failed")
+    }
   }
-
-  const handleUpload = () => {}
 
   return (
     <Dialog>
@@ -115,13 +181,14 @@ const MediaCrop = () => {
           {/* Cropper */}
 
           {mediaSrc && (
-            <div className="relative w-full h-[500px] bg-black rounded-2xl overflow-hidden">
+            <div className="relative w-full h-[250px] bg-black rounded-2xl overflow-hidden">
               <Cropper
                 image={mediaType === "image" ? mediaSrc : undefined}
                 video={mediaType === "video" ? mediaSrc : undefined}
                 crop={crop}
                 zoom={zoom}
                 aspect={aspect}
+                objectFit="contain"
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
@@ -206,8 +273,8 @@ const MediaCrop = () => {
             )}
 
             {mediaSrc && croppedAreaPixels && (
-              <Button onClick={handleUpload} className="rounded-xl">
-                Upload Cropped Media
+              <Button onClick={handleUpload}  className="rounded-xl">
+              {isUploading? "Uploading": "Upload Cropped Media"}
               </Button>
             )}
           </div>
