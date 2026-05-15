@@ -1,208 +1,220 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useRef, useState } from "react";
 import Cropper from "react-easy-crop";
+
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
+  DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+const aspectRatios = [
+  {
+    label: "square",
+    value: 1,
+  },
+  {
+    label: "portrait",
+    value: 4 / 5,
+  },
+  {
+    label: "story",
+    value: 9 / 16,
+  },
+  {
+    label: "landscape",
+    value: 16 / 9,
+  },
+];
 
-type MediaType = "image" | "video" | null;
+const MediaCrop = () => {
+   const [file, setFile] = useState(null);
+   const [mediaType, setMediaType] = useState("");
+   const [mediaSrc, setMediaSrc] = useState("");
 
-type CropArea = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+   const [crop, setCrop] = useState({ x: 0, y: 0 });
+   const [zoom, setZoom] = useState(1);
 
-// 🖼 helper: crop image
-const getCroppedImage = async (
-  imageSrc: string,
-  cropPixels: CropArea,
-): Promise<string> => {
-  const image = new Image();
-  image.src = imageSrc;
+   const [aspect, setAspect] = useState(1);
 
-  await new Promise<void>((res) => {
-    image.onload = () => res();
-  });
+   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+   const [previewImage, setPreviewImage] = useState("");
 
-  if (!ctx) throw new Error("Canvas not supported");
+   const videoRef = useRef(null);
 
-  canvas.width = cropPixels.width;
-  canvas.height = cropPixels.height;
+  
+  const handleFileChange = (e: any) => {
+    const file = e.target?.files?.[0];
+    if(!file) return
 
-  ctx.drawImage(
-    image,
-    cropPixels.x,
-    cropPixels.y,
-    cropPixels.width,
-    cropPixels.height,
-    0,
-    0,
-    cropPixels.width,
-    cropPixels.height,
-  );
+    setFile(file);
 
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      resolve(URL.createObjectURL(blob));
-    }, "image/jpeg");
-  });
-};
+    const type = file.type.startsWith("video") ? "video" : "image";
+  }
+  
+  const createImagePreview = () => {
 
-export default function MediaCropDialogTS() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  }
+  
+  const onCropComplete = () => {
 
-  const [open, setOpen] = useState<boolean>(false);
+  }
 
-  const [mediaType, setMediaType] = useState<MediaType>(null);
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
-
-  const [crop, setCrop] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-
-  const [zoom, setZoom] = useState<number>(1);
-
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(
-    null,
-  );
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [videoFramePreview, setVideoFramePreview] = useState<string | null>(
-    null,
-  );
-
-  const onCropComplete = useCallback((_: any, croppedPixels: CropArea) => {
-    setCroppedAreaPixels(croppedPixels);
-  }, []);
-
-  // 🖼 IMAGE CROP
-  const handleImageCrop = async () => {
-    if (!mediaUrl || !croppedAreaPixels) return;
-
-    const cropped = await getCroppedImage(mediaUrl, croppedAreaPixels);
-    setImagePreview(cropped);
-  };
-
-  // 🎥 VIDEO FRAME PREVIEW
-  const captureVideoFrame = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (!video || !canvas || !croppedAreaPixels) return;
-
-    const { x, y, width, height } = croppedAreaPixels;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(video, x, y, width, height, 0, 0, width, height);
-
-    setVideoFramePreview(canvas.toDataURL("image/png"));
-  };
+  const handleUpload = () => {}
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog>
       <DialogTrigger asChild>
-        <Button>Select Media</Button>
+        <Button>Open Media Cropper</Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-5xl">
-        <DialogTitle>Crop Media</DialogTitle>
+      <DialogContent className="max-w-5xl w-full rounded-3xl p-0 overflow-hidden">
+        <div className="p-6 space-y-6">
+          {/* Header */}
 
-        {/* FILE INPUT */}
-        <input
-          type="file"
-          accept="image/*,video/*"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Crop Image / Video
+            </DialogTitle>
+          </DialogHeader>
 
-            const url = URL.createObjectURL(file);
-            setMediaUrl(url);
+          {/* File Input */}
 
-            setMediaType(file.type.startsWith("video") ? "video" : "image");
-          }}
-        />
+          <div className="space-y-2">
+            <Label>Select Media</Label>
 
-        {/* CROP AREA */}
-        {mediaUrl && (
-          <div className="relative w-full h-[400px] mt-4 bg-black">
-            {/* IMAGE */}
-            {mediaType === "image" && (
+            <Input
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleFileChange}
+            />
+          </div>
+
+          {/* Aspect Ratio Buttons */}
+
+          <div className="flex flex-wrap gap-3">
+            {aspectRatios.map((aspectItem, i) => (
+              <Button
+                key={i}
+                type="button"
+                variant={aspect === aspectItem.value ? "default" : "outline"}
+                className="capitalize rounded-xl"
+                onClick={() => setAspect(aspectItem.value)}
+              >
+                {aspectItem.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Cropper */}
+
+          {mediaSrc && (
+            <div className="relative w-full h-[500px] bg-black rounded-2xl overflow-hidden">
               <Cropper
-                image={mediaUrl}
+                image={mediaType === "image" ? mediaSrc : undefined}
+                video={mediaType === "video" ? mediaSrc : undefined}
                 crop={crop}
                 zoom={zoom}
-                aspect={1}
+                aspect={aspect}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
               />
+            </div>
+          )}
+
+          {/* Zoom */}
+
+          {mediaSrc && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Zoom</Label>
+
+                <span className="text-sm text-muted-foreground">
+                  {zoom.toFixed(1)}x
+                </span>
+              </div>
+
+              <Slider
+                min={1}
+                max={3}
+                step={0.1}
+                value={[zoom]}
+                onValueChange={(value) => setZoom(value[0])}
+              />
+            </div>
+          )}
+
+          {/* Image Preview */}
+
+          {previewImage && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Image Preview</h3>
+
+              <img
+                src={previewImage}
+                alt="preview"
+                className="w-[300px] rounded-2xl border shadow"
+              />
+            </div>
+          )}
+
+          {/* Video Preview */}
+
+          {mediaType === "video" && mediaSrc && croppedAreaPixels && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Video Preview Frame</h3>
+
+              <div className="relative inline-block rounded-2xl overflow-hidden border">
+                <video
+                  ref={videoRef}
+                  src={mediaSrc}
+                  controls
+                  className="w-[400px]"
+                />
+
+                <div
+                  className="absolute border-2 border-red-500 pointer-events-none"
+                  style={{
+                    left: `${croppedAreaPixels.x}px`,
+                    top: `${croppedAreaPixels.y}px`,
+                    width: `${croppedAreaPixels.width}px`,
+                    height: `${croppedAreaPixels.height}px`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+
+          <div className="flex flex-wrap gap-3 pt-2">
+            {mediaType === "image" && (
+              <Button
+                variant="secondary"
+                onClick={createImagePreview}
+                className="rounded-xl"
+              >
+                Generate Preview
+              </Button>
             )}
 
-            {/* VIDEO (UI crop overlay) */}
-            {mediaType === "video" && (
-              <>
-                <video ref={videoRef} src={mediaUrl} className="hidden" />
-
-                <Cropper
-                  image={mediaUrl}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={onCropComplete}
-                />
-              </>
+            {mediaSrc && croppedAreaPixels && (
+              <Button onClick={handleUpload} className="rounded-xl">
+                Upload Cropped Media
+              </Button>
             )}
           </div>
-        )}
-
-        {/* ACTIONS */}
-        <div className="flex gap-3 mt-4">
-          {mediaType === "image" && (
-            <Button onClick={handleImageCrop}>Crop Image</Button>
-          )}
-
-          {mediaType === "video" && (
-            <Button onClick={captureVideoFrame}>Preview Video Frame</Button>
-          )}
-        </div>
-
-        <canvas ref={canvasRef} className="hidden" />
-
-        {/* PREVIEWS */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          {imagePreview && (
-            <div>
-              <h3 className="text-sm mb-2">Cropped Image</h3>
-              <img src={imagePreview} className="rounded-xl border" />
-            </div>
-          )}
-
-          {videoFramePreview && (
-            <div>
-              <h3 className="text-sm mb-2">Video Frame Preview</h3>
-              <img src={videoFramePreview} className="rounded-xl border" />
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+export default MediaCrop;

@@ -92,11 +92,12 @@ function App() {
         <div className="flex gap-3">
           <UploadComponent />
           <UploadImageFromServer />
+          <MediaCropDialogTS />
         </div>
       </div>
 
       <hr />
-      <MediaCropDialogTS />
+     
       <div className="flex flex-col gap-3 mt-3  w-full  items-center">
         {isUsersLoading ? (
           <UserCardSkeleton />
