@@ -160,15 +160,13 @@ const MediaCrop = () => {
 
       const formData = new FormData();
       formData.append("file", file);
-      console.log("croppedareapixels", croppedAreaPixels);
+
       formData.append("cropData", JSON.stringify(croppedAreaPixels));
       formData.append("aspectRatio", aspect);
 
-      await uploadCroppedImageVideo(formData);
-      alert("Upload Sucess");
+      await uploadCroppedImageVideo(formData).unwrap();
     } catch (error: any) {
-      console.log("Error in handleUpload", error.message);
-      alert("Upload failed");
+      console.log("Error in handleUpload", error.data.message);
     }
   };
 
@@ -230,9 +228,6 @@ const MediaCrop = () => {
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
-                onMediaLoaded={(mediaSize) => {
-                  console.log(mediaSize);
-                }}
               />
             </div>
           )}
@@ -288,7 +283,7 @@ const MediaCrop = () => {
 
           {/* Cropped Preview */}
 
-          {mediaType === "video" && (
+          {mediaType === "video" && mediaSrc && (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold">Cropped Video Preview</h3>
 

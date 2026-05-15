@@ -1,26 +1,21 @@
 import { spawn, execFile } from "child_process";
 import ffprobe from "ffprobe-static";
-import fs from "fs"
+import fs from "fs";
 export const cropVideo = (inputPath, outputPath, crop) => {
   try {
     return new Promise((resolve, reject) => {
-       console.log("INPUT PATH:", inputPath);
+      if (!fs.existsSync(inputPath)) {
+        return reject(new Error("Input file does not exist"));
+      }
 
-          if (!fs.existsSync(inputPath)) {
-            return reject(new Error("Input file does not exist"));
-          }
+      const stats = fs.statSync(inputPath);
 
-           const stats = fs.statSync(inputPath);
-
-           console.log("FILE SIZE:", stats.size);
-
-           if (stats.size === 0) {
-             return reject(new Error("Uploaded file is empty"));
-           }
-
+      if (stats.size === 0) {
+        return reject(new Error("Uploaded file is empty"));
+      }
 
       // initial ffmpeg command: ffmpeg -i input.mp4
-     const args = ["-i", inputPath, "-f", "null", "-"];
+      const args = ["-i", inputPath, "-f", "null", "-"];
       if (crop) {
         let { x, y, width, height } = crop;
 
@@ -55,10 +50,9 @@ export const cropVideo = (inputPath, outputPath, crop) => {
         "-movflags",
         "+faststart", // to start streaming without downloading in browser
         "-y",
-        outputPath, // -y: overwrite output if file exists
+        outputPath // -y: overwrite output if file exists
       );
-        console.log("FFMPEG CMD:");
-      console.log("ffmpeg args:", args.join(" "));
+
       if (!inputPath) {
         return reject(new Error("Input path is missing"));
       }
@@ -70,49 +64,50 @@ export const cropVideo = (inputPath, outputPath, crop) => {
       ff.stderr.on("data", (data) => {
         console.log(data.toString());
       });
-        ff.on("error", (err) => {
-          reject(err);
-        });
+      ff.on("error", (err) => {
+        reject(err);
+      });
       ff.on("close", (code) => {
         if (code === 0) return resolve(true);
         else reject(new Error(`FFmpeg failed with code ${code}`));
       });
     });
   } catch (error) {
-    console.log("error in cropVideo", error.message)
+    console.log("error in cropVideo", error.message);
   }
 };
 
 export const getVideoDimension = (filePath) => {
   return new Promise((resolve, reject) => {
-    execFile(ffprobe.path, [
-      "-v",
-      "error", // output only error, hides logs/warnings
-      "-select_streams",
-      "v:0", // a file may contain audio, video, subtitles. Select only video stream
-      "-show_entries",
-      "stream=width,height", // to only only height and width instead of large metadata
-      "-of",
-      "json", // output format
-      filePath,
-    ],
-    (err, stdout) => {
-      if (err) return reject(err);
-      try {
-        const data = JSON.parse(stdout);
-        const stream = data.streams?.[0];
-        if (!stream?.width || !stream?.height) {
-          return reject(new Error("No video stream found"));
-        }
-        resolve({
-          width: stream.width,
-          height: stream.height,
-        });
-      } catch (error) {
+    execFile(
+      ffprobe.path,
+      [
+        "-v",
+        "error", // output only error, hides logs/warnings
+        "-select_streams",
+        "v:0", // a file may contain audio, video, subtitles. Select only video stream
+        "-show_entries",
+        "stream=width,height", // to only only height and width instead of large metadata
+        "-of",
+        "json", // output format
+        filePath,
+      ],
+      (err, stdout) => {
+        if (err) return reject(err);
+        try {
+          const data = JSON.parse(stdout);
+          const stream = data.streams?.[0];
+          if (!stream?.width || !stream?.height) {
+            return reject(new Error("No video stream found"));
+          }
+          resolve({
+            width: stream.width,
+            height: stream.height,
+          });
+        } catch (error) {
           reject(error);
+        }
       }
-      
-    }
-  );
+    );
   });
 };

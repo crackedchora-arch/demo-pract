@@ -1,4 +1,4 @@
-import fs from "fs"
+import fs from "fs";
 import { clients } from "../../utils/sseClients.js";
 import cloudinary from "../../config/cloudinary.js";
 import { CLOUDINARY_FOLDERS } from "../../contants/constant.js";
@@ -7,7 +7,6 @@ import { cropVideo, getVideoDimension } from "../../utils/cropVideo.js";
 
 export const uploadImage = async (req, res) => {
   try {
-
     const filePath = req.file.path;
     const uploadId = req.body.uploadId;
 
@@ -28,14 +27,14 @@ export const uploadImage = async (req, res) => {
         client.write(
           `data: ${JSON.stringify({
             progress,
-          })}\n\n`,
+          })}\n\n`
         );
       }
     });
 
     const cloudinaryUpload = cloudinary.uploader.upload_stream(
       {
-        folder: "demo_pract"
+        folder: "demo_pract",
       },
 
       async (error, result) => {
@@ -54,7 +53,7 @@ export const uploadImage = async (req, res) => {
               progress: 100,
               done: true,
               url: result.secure_url,
-            })}\n\n`,
+            })}\n\n`
           );
 
           client.end();
@@ -70,11 +69,10 @@ export const uploadImage = async (req, res) => {
         });
 
         return res.json(result);
-      },
+      }
     );
 
     stream.pipe(cloudinaryUpload);
-   
   } catch (error) {
     console.log("error in uploadImage:", error.message);
 
@@ -85,20 +83,16 @@ export const uploadImage = async (req, res) => {
 };
 
 // cropData = {x,y, height, width}
-export const uploadCroppedImageVideo =  async (req, res) => {
+export const uploadCroppedImageVideo = async (req, res) => {
   try {
-    const {aspectRatio} = req.body;
-    const cropData = JSON.parse(req.body.cropData)
-    const file  = req.file;
-    console.log("File info:", file);
-    console.log("File path exists?", fs.existsSync(file.path));
-    console.log("File size:", fs.statSync(file.path).size);
-    if(!file ) return res.status(400).json({message: "file is required"});
-    const mimetype =file.mimetype;
+    const cropData = JSON.parse(req.body.cropData);
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ message: "file is required" });
+    const mimetype = file.mimetype;
 
     // image handling
     if (mimetype.startsWith("image")) {
-     
       const cloudResponse = await cloudinary.uploader.upload(file.path, {
         folder: CLOUDINARY_FOLDERS.IMAGES,
         resource_type: "image",
@@ -108,9 +102,9 @@ export const uploadCroppedImageVideo =  async (req, res) => {
             y: cropData.y,
             width: cropData.width,
             height: cropData.height,
-            crop: "crop"
-          }
-        ]
+            crop: "crop",
+          },
+        ],
       });
 
       // cleanup temp file
@@ -127,26 +121,24 @@ export const uploadCroppedImageVideo =  async (req, res) => {
     }
 
     // video handling
-    if(mimetype.startsWith("video")){
+    if (mimetype.startsWith("video")) {
       // cropping video
       const outputFilename = `cropped-${Date.now()}.mp4`;
-      const outputPath = path.join(
-        path.dirname(file.path), outputFilename
-      );
-      
+      const outputPath = path.join(path.dirname(file.path), outputFilename);
+
       await cropVideo(file.path, outputPath, cropData);
-console.log("hi");
+
       // final video dimensions
       const dimensions = await getVideoDimension(outputPath);
       const finalAspectRatio = dimensions.width / dimensions.height;
-      
+
       const cloudResponse = await cloudinary.uploader.upload(outputPath, {
-       folder: CLOUDINARY_FOLDERS.VIDEOS,
-       resource_type: "video"
+        folder: CLOUDINARY_FOLDERS.VIDEOS,
+        resource_type: "video",
       });
 
-      fs.unlinkSync(file.path)
-      if(fs.existsSync(outputPath)){
+      fs.unlinkSync(file.path);
+      if (fs.existsSync(outputPath)) {
         fs.unlinkSync(outputPath);
       }
 
@@ -158,14 +150,10 @@ console.log("hi");
         height: dimensions.height,
         aspectRatio: finalAspectRatio,
       });
-      
     }
-    throw new Error("unsupported file type")
+    throw new Error("unsupported file type");
   } catch (error) {
-     console.log("Error in uploadCroppedImageVideo", error.message);
-     return res.status(500).json({message: "Server Error"})
-
-
-     
+    console.log("Error in uploadCroppedImageVideo", error.message);
+    return res.status(500).json({ message: "Server Error" });
   }
-}
+};
