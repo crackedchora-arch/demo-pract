@@ -7,6 +7,7 @@ import uploadRoutes from "./modules/upload/upload.route.js";
 import cors from "cors";
 import { app, server } from "./socket/socket.js";
 import peerServer from "./peer/peer.js";
+import { createRouter } from "./mediasoup/router.js";
 
 dotenv.config();
 
@@ -24,7 +25,13 @@ app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/sse", sseRoutes);
 app.use("/peerjs", peerServer);
+app.get("/rtpCapabilities", async(req, res) => {
+  const router = await createRouter();
 
+  res.json(router.rtpCapabilities);
+});
+
+await createRouter()
 server.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });

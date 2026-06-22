@@ -13,6 +13,7 @@ import UploadImageFromServer from "./components/dialogs/UploadImageFromServer";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import MediaCropDialogTS from "./components/dialogs/MediaCrop";
 import VideoCallHomepage from "./pages/VideoCallHomepage";
+import ConferenceCallHomepage from "./pages/ConferenceCallHomepage";
 
 function App() {
   const limit = 10;
@@ -133,6 +134,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/video-call" element={<VideoCallHomepage />} />
+          <Route path="/video-conference" element={<ConferenceCallHomepage />} />
         </Routes>
       </BrowserRouter>
     </div>
